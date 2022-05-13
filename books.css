@@ -1,0 +1,35 @@
+.bookbox {
+    text-align: center;
+    background-color: beige;
+    width: 200px;
+    margin: 10px;
+    border-radius: 30px;
+}
+
+.p-wikipedia__main {
+    text-align: center;
+    background-color: beige;
+    height: 100px;
+    width: 200px;
+    margin: 10px;
+    border-radius: 10px;
+    justify-items: center;
+}
+
+#output {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#js-wikipedia-body {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.imag {
+    margin: 20px;
+}
+
+.p-wikipedia__block-date {
+    margin: 10px;
+}

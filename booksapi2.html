@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>googleBooksAPI</title>
+    <link rel="stylesheet" href="books.css" />
+</head>
+
+<body>
+
+    <h1>google books & Wikipedia API</h1>
+    <span>検索ワード　</span><input type="text" id="keyword">
+    <h2>google 結果</h2>
+    <div class="result">
+        <div id="output"></div>
+    </div>
+    <h2>wikipedia 結果</h2>
+    <div class="result">
+        <div class="p-wikipedia">
+            <div class="p-wikipedia__inner">
+                <div class="p-wikipedia__body" id="js-wikipedia-body"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- axiosライブラリの読み込み -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        $("#keyword").on("keyup", function () {
+
+            const keyword = $("#keyword").val();
+
+            // リクエストを送るurlを準備
+            const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${keyword}`;
+            axios
+                .get(url)
+                .then(function (response) {
+                    // リクエスト成功時の処理（responseに結果が入っている）
+                    console.log(response);
+
+                    const array = [];
+
+                    for (let i = 0; i < 8; i++) {
+                        array.push(`
+          <div class="bookbox">
+            <a href="${response.data.items[i].volumeInfo.infoLink}">
+              <br>
+              <img src="${response.data.items[i].volumeInfo.imageLinks?.thumbnail}" alt="" class="img">
+              <p>${response.data.items[i].volumeInfo.title}</p>
+              <br>
+            </a>
+            <p>${response.data.items[i].volumeInfo.authors}</p>
+
+          </div>
+          `)
+                    }
+                    console.log(array);
+
+                    $("#output").html(array);
+
+                })
+                .catch(function (error) {
+                    // リクエスト失敗時の処理（errorにエラー内容が入っている）
+                    console.log(error);
+                })
+                .finally(function () {
+                    // 成功失敗に関わらず必ず実行
+                    console.log("done!");
+                });
+        });
+
+
+    </script>
+    <script>
+        (() => {
+
+            const wikiInput = document.getElementById("keyword"); //input部分
+            const wikiBody = document.getElementById("js-wikipedia-body"); //表示させるエリア
+
+            const wikiFetch = async (inputValue) => { //asyncで非同期処理だと宣言する
+                const fetchValue = fetch(`https://ja.wikipedia.org/w/api.php?format=json&action=query&origin=*&list=search&srlimit=1&srsearch=${inputValue}`, {
+                    method: "GET"
+                })
+                    .then((value) => {
+                        return value.json(); //wikipediaからのデータをJSON形式に変換
+                    })
+                    .catch(() => {
+                        alert("wikipediaにうまくアクセスできないようです、、");
+                    });
+
+                const valueJson = await fetchValue; //非同期処理を実行
+                const valueTargets = valueJson.query.search; //必要な情報が入っている配列を取得
+
+                if (!valueTargets.length) {
+                    const wikiNull = document.createElement("p");
+                    wikiNull.classList.add("p-wikipedia__null");
+                    wikiNull.textContent = "検索したワードはヒットしませんでした。";
+                    wikiBody.appendChild(wikiNull);
+                } else {
+                    const elemWrap = document.createElement("div");
+                    elemWrap.classList.add("p-wikipedia__main");
+
+                    for (const elem of valueTargets) {
+                        //a要素を作ってリンク先にページIDを設定する
+                        const elemBlock = document.createElement("a");
+                        elemBlock.classList.add("p-wikipedia__block");
+                        elemBlock.setAttribute("target", "_blank");
+                        elemBlock.setAttribute("rel", "noopener noreferrer");
+                        const elemId = elem.pageid;
+                        elemBlock.setAttribute("href", `http://jp.wikipedia.org/?curid=${elemId}`);
+
+                        //span要素を作ってタイトルを設定する
+                        const elemSpan = document.createElement("span");
+                        elemSpan.classList.add("p-wikipedia__block-ttl");
+                        const elemTitle = elem.title;
+                        elemSpan.textContent = elemTitle;
+
+                        //span要素を作って更新日を設定する
+                        const elemSpan2 = document.createElement("span");
+                        elemSpan2.classList.add("p-wikipedia__block-date");
+                        const elemDate = elem.timestamp;
+                        const elemDateSlice = elemDate.slice(0, 10).replace(/-/g, ".");
+                        elemSpan2.textContent = "最終更新日：" + elemDateSlice;
+
+                        //作成した要素を順番に組み合わせていく
+                        elemWrap.appendChild(elemBlock);
+                        elemBlock.appendChild(elemSpan);
+                        elemBlock.appendChild(elemSpan2);
+                        wikiBody.appendChild(elemWrap);
+                    }
+                }
+            };
+
+            //クリックイベントに設定している関数
+            const wikiData = () => {
+                wikiBody.innerHTML = ""; //一旦js-wikipedia-bodyの中を空にする
+                const inputValue = wikiInput.value; //Input要素に入力されたテキストを取得
+                wikiFetch(inputValue);
+            };
+
+            $("#keyword").on("keyup", wikiData);
+        })();
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <script>
+        $(function () {
+            $(".result div").on("click", function () {
+                $(this).next().slideToggle();
+            });
+        });
+    </script>
+</body>
+
+</html>
